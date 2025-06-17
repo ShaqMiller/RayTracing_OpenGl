@@ -20,5 +20,6 @@ public:
 	void addSpehere(const Material& mat, const glm::vec3& pos,const float& radius);
 	void addSpehere(const Sphere& sphere);
 
+	Light* getLightByIndex(int i);
 };
 

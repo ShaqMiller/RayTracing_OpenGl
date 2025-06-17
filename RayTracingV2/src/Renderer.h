@@ -17,6 +17,8 @@ public:
 	glm::vec3 TraceRay(const Ray& ray, const Scene& scene);
 	void BobVertically(Scene scene);
 
+	Scene* getScene();
+
 };
 
 

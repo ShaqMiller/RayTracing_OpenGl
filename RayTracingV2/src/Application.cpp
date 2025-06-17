@@ -8,6 +8,7 @@ const int GLWindowHeight = 620;
 
 const int textureWidth = 256;
 const int textureHeight = 256;
+Renderer* g_renderer = nullptr;
 
 // Vertex + Fragment Shader source
 const char* vertexShaderSrc = R"(
@@ -68,6 +69,35 @@ GLuint CreateShaderProgram() {
     return program;
 }
 
+
+// Mouse callback to update light position
+void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
+    if (!g_renderer) return;  // Renderer not initialized yet
+
+    Scene* scene = g_renderer->getScene();
+    if (!scene) return;
+    
+    Light* firstLight = scene->getLightByIndex(0);
+    if (!firstLight) return;
+
+    // Get window size for normalization
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
+
+    // Normalize mouse coordinates from [0, width] and [0, height] to [-1, 1]
+    float normX = (float(xpos) / width) * 2.0f - 1.0f;
+    float normY = 1.0f - (float(ypos) / height) * 2.0f;  // Invert Y axis
+
+    // Update light position X and Y based on mouse position
+    // Assuming Light has glm::vec3 position or similar
+    firstLight->direction.x = normX ;
+    firstLight->direction.y = normY;
+    // Optional: keep z as is or set some fixed depth
+    // firstLight->position.z = some_value;
+}
+
+
+
 int main() {
     // Init GLFW
     if (!glfwInit())
@@ -79,6 +109,8 @@ int main() {
         glfwTerminate();
         return -1;
     }
+    glfwSetCursorPosCallback(window, cursor_position_callback); //for controlling light sources
+
     glfwMakeContextCurrent(window);
 
     // Init GLEW
@@ -121,8 +153,8 @@ int main() {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    Renderer renderer = Renderer(GLWindowWidth, GLWindowHeight);
-    unsigned int textureID = renderer.Render();
+    g_renderer = new Renderer(GLWindowWidth, GLWindowHeight);
+    unsigned int textureID = g_renderer->Render();
 
     
 
@@ -135,6 +167,7 @@ int main() {
         glClearColor(0, 0, 0, 1);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        textureID = g_renderer->Render();
         glUseProgram(shader);
         glBindVertexArray(vao);
         glBindTexture(GL_TEXTURE_2D, textureID);

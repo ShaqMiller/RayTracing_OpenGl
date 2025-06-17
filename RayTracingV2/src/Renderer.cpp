@@ -17,11 +17,18 @@ Renderer::Renderer(int glWidth, int glHeight) {
         sphere1.m_position = glm::vec3(0.0f, 0.0f, -12.0f);
         sphere1.m_radius = 1.9f;
         m_scene.addSpehere(sphere1);
+
+        Sphere sphere2 = Sphere();
+        sphere2.m_material = Material(glm::vec3(0.5f, 1.0f, 0.8f), 0.5f);
+        sphere2.m_position = glm::vec3(10.0f, 10.0f, -30.0f);
+        sphere2.m_radius = 2.9f;
+        m_scene.addSpehere(sphere2);
     }
 
     {
         Light light = Light();
         light.intensity = 0.8f;
+        light.color = glm::vec3(0.3f, 0.3f, 0.0f);
         m_scene.addLight(light);
     }
   
@@ -30,7 +37,11 @@ Renderer::Renderer(int glWidth, int glHeight) {
 Renderer::~Renderer() {
 }
 
- unsigned int Renderer::Render(){
+Scene* Renderer::getScene(){
+    return &m_scene;
+}
+
+unsigned int Renderer::Render(){
     const int textureWidth = 800;
     const int textureHeight = 620;
 

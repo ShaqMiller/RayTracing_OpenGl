@@ -37,3 +37,10 @@ void Scene::addSpehere(const Sphere& sphere) {
 }
 
 
+Light* Scene::getLightByIndex(int i){
+	if (i >= 0 && i < static_cast<int>(m_lights.size())) {
+        return &m_lights[i];
+    }
+    return nullptr;
+}
+
