@@ -12,11 +12,11 @@ Renderer::Renderer(int glWidth, int glHeight) {
     m_glHeight = glHeight;
 
     {
-        Sphere sphere2 = Sphere();
-        sphere2.m_material = Material(glm::vec3(1.0f, 0.0f, 0.8f), 0.5f);
-        sphere2.m_position = glm::vec3(1.0f, 0.0f, -2.0f);
-        sphere2.m_radius = 2.0f;
-        m_scene.addSpehere(sphere2);
+        Sphere sphere1 = Sphere();
+        sphere1.m_material = Material(glm::vec3(1.0f, 0.0f, 0.8f), 0.5f);
+        sphere1.m_position = glm::vec3(0.0f, 0.0f, -12.0f);
+        sphere1.m_radius = 1.9f;
+        m_scene.addSpehere(sphere1);
     }
 
     {
@@ -30,9 +30,9 @@ Renderer::Renderer(int glWidth, int glHeight) {
 Renderer::~Renderer() {
 }
 
-void Renderer::Render(){
-    const int textureWidth = 700;
-    const int textureHeight = 700;
+ unsigned int Renderer::Render(){
+    const int textureWidth = 800;
+    const int textureHeight = 620;
 
     GLubyte *textureData = new GLubyte[textureWidth * textureHeight * 3];
     //GLubyte textureData [textureWidth * textureHeight * 3];
@@ -40,56 +40,44 @@ void Renderer::Render(){
     int curInd = 0;
 
 	Ray ray = Ray();
-	ray.Origin = glm::vec3(0.0f, 0.0f, 3.0f);
+	ray.Origin = glm::vec3(0.0f, 0.0f, 0.0f);
 
-    float aspectRatio = (float)m_glWidth / (float)m_glHeight;
+    float aspectRatio = (float)textureWidth / (float)textureHeight;
 
-    for (int y = 0; y < textureHeight; ++y)
-    {
-        for (int x = 0; x < textureWidth; ++x)
-        {
-            //CAMERA TEST
-            //const glm::mat4 projection = glm::perspectiveFov(glm::radians(90.0f), (float)m_glWidth, (float)m_glHeight, 0.1f, 200.0f);
-            //const glm::mat4 view = glm::lookAt(ray.Origin, ray.Origin + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0, 1, 0));
-            //const glm::mat4 inverseView = glm::inverse(view);
-
-
+    for (int y = 0; y < textureHeight; ++y) {
+        for (int x = 0; x < textureWidth; ++x) {
             //Coord based on 0->1
             glm::vec2 coord = { (float)x / (float)textureWidth,(float)y / (float)textureHeight };
             coord = coord * 2.0f - 1.0f; //from 0-1 to -1 -> 1
+            coord.x *= aspectRatio; // Correct horizontal scaling
 
-            //CAMERA TEST
-            //glm::vec4 target = glm::inverse(projection) * glm::vec4(coord.x, coord.y,1,1);
-            //glm::vec3 calculatedRayDir = glm::vec3(inverseView* glm::vec4(glm::normalize(glm::vec3(target) / target.w),0));
 
             ray.Direction = glm::vec3(coord, -1.0f);
-            ray.Direction.x *= aspectRatio;
             ray.Direction = glm::normalize(ray.Direction);
 
 
-
             glm::vec3 pixelColor = TraceRay(ray, m_scene);
-            //std::cout << pixelColor.r << "  after *255:" << pixelColor.r * 255 << std::endl;
-            textureData[curInd] = static_cast<GLubyte>(pixelColor.r * 255.0f);   // Red component
-            textureData[curInd + 1] = static_cast<GLubyte>(pixelColor.g * 255.0f);   // Green component
-            textureData[curInd + 2] = static_cast<GLubyte>(pixelColor.b * 255.0f);   // Blue component
-            curInd += 3;
+
+            textureData[curInd + 0] = static_cast<GLubyte>(pixelColor.x * 255); // Red
+            textureData[curInd + 1] = static_cast<GLubyte>(pixelColor.y * 255); // Green
+            textureData[curInd + 2] = static_cast<GLubyte>(pixelColor.z * 255); // Blue;                          
+            curInd+=3;
         }
     }
-    
-    //BobVertically(m_scene);
 
-    unsigned int textureID;
+    
+    GLuint textureID;
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    // Texture settings
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureWidth, textureHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
-    glEnable(GL_TEXTURE_2D);
-
+    glGenerateMipmap(GL_TEXTURE_2D);
     delete[] textureData;
+
+    return textureID;
 }
 
 glm::vec3 Renderer::TraceRay(const Ray& ray, const Scene& scene) {
@@ -126,23 +114,24 @@ glm::vec3 Renderer::TraceRay(const Ray& ray, const Scene& scene) {
             continue;
         }
 
+
         //Where hit?
         //(-b+- sqrt(discriminant))/(2.0f * a)
         float closestT = (-b - glm::sqrt(discriminant)) / (2.0f * a);
         // float t0 = (-b + glm::sqrt(discriminant)) / (2.0f * a); //Second hit
 
-        if (closestT < hitDistance) {
+        if (closestT > 0.0f && closestT < hitDistance) {
             hitDistance = closestT;
             closestSphere = &sphere;
         }
 
     }
-
+    
     //No hits
     if (closestSphere == nullptr) {
         return glm::vec3(0.0f, 0.0f, 0.0f);
-
     }
+
 
     glm::vec3 origin = ray.Origin - closestSphere->m_position;
     glm::vec3 hitPoint = origin + ray.Direction * hitDistance;

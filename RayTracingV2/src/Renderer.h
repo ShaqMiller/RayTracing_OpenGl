@@ -13,7 +13,7 @@ public:
 	Renderer(int glWidth,int glHeight);
 	~Renderer();
 
-	void Render();
+	unsigned int Render();
 	glm::vec3 TraceRay(const Ray& ray, const Scene& scene);
 	void BobVertically(Scene scene);
 
